@@ -1,0 +1,8 @@
+- name: Deploy Rancher and Longhorn on RKE2
+  hosts: masters
+  become: yes
+  gather_facts: false
+
+  roles:
+    - rancher
+    - longhorn
