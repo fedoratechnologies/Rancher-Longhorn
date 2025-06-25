@@ -1,0 +1,23 @@
+- name: Add Longhorn Helm repository
+  ansible.builtin.shell: |
+    helm repo add longhorn https://charts.longhorn.io
+    helm repo update
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Create longhorn-system namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: longhorn-system
+    kubeconfig: "{{ kubeconfig_path }}"
+
+- name: Install Longhorn via Helm
+  ansible.builtin.shell: |
+    helm install longhorn longhorn/longhorn \
+      --namespace longhorn-system \
+      --set defaultSettings.defaultReplicaCount=2 \
+      --set persistence.defaultClass=true \
+      --set defaultSettings.allowRecurringJobWhileVolumeDetached=true
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
