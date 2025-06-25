@@ -1,0 +1,4 @@
+rancher_domain: rancher.fedora.solutions
+rancher_tls_email: admin@fedora.solutions
+kubeconfig_path: /etc/rancher/rke2/rke2.yaml
+kubernetes_version: "v1.28.0"  # Placeholder as requested
