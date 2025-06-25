@@ -1,0 +1,43 @@
+- name: Install helm
+  ansible.builtin.shell: |
+    curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Install cert-manager via Helm
+  ansible.builtin.shell: |
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+    kubectl create namespace cert-manager --dry-run=client -o yaml | kubectl apply -f -
+    helm install cert-manager jetstack/cert-manager \
+      --namespace cert-manager \
+      --version v1.14.4 \
+      --set installCRDs=true
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Add rancher chart repo
+  ansible.builtin.shell: |
+    helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+    helm repo update
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Create cattle-system namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: cattle-system
+    kubeconfig: "{{ kubeconfig_path }}"
+
+- name: Install Rancher
+  ansible.builtin.shell: |
+    helm install rancher rancher-latest/rancher \
+      --namespace cattle-system \
+      --set hostname={{ rancher_domain }} \
+      --set replicas=3 \
+      --set ingress.tls.source=letsEncrypt \
+      --set letsEncrypt.email={{ rancher_tls_email }} \
+      --set letsEncrypt.ingress.class=traefik
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
